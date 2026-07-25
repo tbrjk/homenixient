@@ -1,0 +1,10 @@
+# Sorties de build Nix
+result
+result-*
+
+# Cache direnv
+.direnv/
+
+# Divers
+*.swp
+.DS_Store
