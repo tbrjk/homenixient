@@ -57,7 +57,7 @@
     enableDefaultPackages = true;
     packages = with pkgs; [
       noto-fonts
-      noto-fonts-emoji
+      noto-fonts-color-emoji
       dejavu_fonts
       liberation_ttf # substituts Arial/Times/Courier (compat documents)
       # Police à chasse fixe avec icônes (jolie dans le terminal / les prompts).

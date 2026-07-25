@@ -28,9 +28,11 @@
   # ---------------------------------------------------------------------------
   programs.git = {
     enable = true;
-    userName = userSettings.fullName;
-    userEmail = userSettings.email;
-    extraConfig = {
+    # home-manager récent : la config git passe par `settings` (avant :
+    # userName / userEmail / extraConfig, désormais dépréciés).
+    settings = {
+      user.name = userSettings.fullName;
+      user.email = userSettings.email;
       init.defaultBranch = "main";
       pull.rebase = true;
       push.autoSetupRemote = true;

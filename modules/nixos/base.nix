@@ -70,7 +70,7 @@
   # Résolution DNS moderne (cache, DNSSEC en mode souple).
   services.resolved = {
     enable = true;
-    dnssec = "allow-downgrade";
+    settings.Resolve.DNSSEC = "allow-downgrade";
   };
 
   # ---------------------------------------------------------------------------
