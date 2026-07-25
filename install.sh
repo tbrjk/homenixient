@@ -236,10 +236,13 @@ run_install() {
   gather_settings install
   summary
   echo
-  warn "INSTALLATION NEUVE : le disque ci-dessus va être EFFACÉ et CHIFFRÉ."
-  local base; base="$(basename "$DISK")"
-  local confirm; confirm=$(ask "Tape le nom du disque pour confirmer (\"$base\")" "")
-  [ "$confirm" = "$base" ] || die "Confirmation incorrecte. Abandon (rien n'a été touché)."
+  warn "INSTALLATION NEUVE : le disque suivant va être EFFACÉ et CHIFFRÉ :"
+  echo "      $DISK"
+  local confirm; confirm=$(ask "Tape OK (ou INSTALL) pour confirmer" "")
+  case "${confirm^^}" in
+    OK|INSTALL) ;;
+    *) die "Confirmation incorrecte. Abandon (rien n'a été touché)." ;;
+  esac
 
   title "1/5 · Partitionnement + chiffrement (disko)"
   # disko lit le disque via settings.nix (import direct dans disko.nix).
