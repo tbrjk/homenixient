@@ -100,11 +100,13 @@ gather_settings() {
   KEYMAP=$(ask   "Clavier console (fr, us, be…)" "$(cur keymap)")
   LOCALE=$(ask   "Locale" "$(cur locale)")
 
-  local kl def_kl="N" vb def_vb="Y"
+  local kl def_kl="N" vb def_vb="N"
   [ "$(cur kernelLatest)" = "true" ] && def_kl="Y"
-  [ "$(cur virtualboxExtensionPack)" = "false" ] && def_vb="N"
+  [ "$(cur virtualboxExtensionPack)" = "true" ] && def_vb="Y"
   KERNEL_LATEST=$(ask_yn "Noyau le plus récent ? (⚠ peut casser VirtualBox)" "$def_kl")
-  VBOX_EXTPACK=$(ask_yn  "VirtualBox Extension Pack ? (USB/RDP, build + long)" "$def_vb")
+  # Extension Pack désactivé par défaut : sa compilation peut saturer la RAM
+  # de l'ISO à l'installation. Activable ensuite (settings.nix + just build).
+  VBOX_EXTPACK=$(ask_yn  "VirtualBox Extension Pack ? (USB/RDP ; à activer plutôt APRÈS l'install)" "$def_vb")
 
   # Disque : demandé seulement en installation neuve.
   if [ "$mode" = "install" ]; then
@@ -230,6 +232,33 @@ git_track() {
 }
 
 # =============================================================================
+#  Espace de build sur l'ISO (RAM limitée)
+#
+#  L'ISO NixOS a son « / » en RAM (tmpfs). Un gros build (ex : module noyau,
+#  extension pack) peut saturer la RAM → « Out of memory » ou « No space left ».
+#  On envoie les fichiers temporaires sur le disque cible (/mnt) et on ajoute
+#  un swap disque le temps de l'installation.
+# =============================================================================
+SWAP_TMP="/mnt/swapfile-install"
+
+prepare_build_space() {
+  $SUDO mkdir -p /mnt/tmp
+  if ! swapon --show 2>/dev/null | grep -q "$SWAP_TMP"; then
+    info "Swap temporaire de 8 Gio sur le disque (évite l'OOM)…"
+    $SUDO fallocate -l 8G "$SWAP_TMP" 2>/dev/null \
+      || $SUDO dd if=/dev/zero of="$SWAP_TMP" bs=1M count=8192 status=none
+    $SUDO chmod 600 "$SWAP_TMP"
+    $SUDO mkswap "$SWAP_TMP" >/dev/null
+    $SUDO swapon "$SWAP_TMP"
+  fi
+}
+
+cleanup_build_space() {
+  $SUDO swapoff "$SWAP_TMP" 2>/dev/null || true
+  $SUDO rm -f "$SWAP_TMP"
+}
+
+# =============================================================================
 #  INSTALLATION NEUVE
 # =============================================================================
 run_install() {
@@ -258,7 +287,11 @@ run_install() {
   git_track
 
   title "4/5 · Installation du système (long : téléchargement + build)"
-  $SUDO nixos-install --flake "$REPO#$FLAKE_ATTR" --no-root-passwd
+  # L'ISO tourne en RAM (tmpfs) : sans précaution, un gros build sature la
+  # mémoire (« Out of memory » / « No space left »). On redirige les fichiers
+  # temporaires vers le disque cible et on ajoute du swap disque.
+  prepare_build_space
+  $SUDO env TMPDIR=/mnt/tmp nixos-install --flake "$REPO#$FLAKE_ATTR" --no-root-passwd
 
   title "5/5 · Finalisation"
   # Mot de passe root
@@ -273,6 +306,9 @@ run_install() {
   $SUDO cp -a "$REPO/." "$target/"
   $SUDO rm -rf "$target/.git"
   $SUDO nixos-enter --root /mnt -c "chown -R $USERNAME:users /home/$USERNAME/homenixient" || true
+
+  # Retire le swap temporaire (il est sur le nouveau système).
+  cleanup_build_space
 
   echo
   info "${C_B}Installation terminée.${C_0}"

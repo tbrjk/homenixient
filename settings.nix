@@ -32,5 +32,8 @@
   # --- Options matériel / virtualisation ---
   kernelLatest = false; # true = noyau le plus récent (matériel très neuf).
   # ⚠️ peut casser le module VirtualBox — laisser false si possible.
-  virtualboxExtensionPack = true; # USB/RDP dans VirtualBox (build un peu plus long)
+  virtualboxExtensionPack = false; # USB/RDP dans VirtualBox.
+  # ⚠️ sa compilation peut saturer la RAM de l'ISO À L'INSTALLATION.
+  #    Laisse false pour installer, puis passe à true + `just build` une fois
+  #    le système démarré (RAM + swap complets, aucun souci).
 }

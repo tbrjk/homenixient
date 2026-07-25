@@ -147,6 +147,7 @@ sudo reboot
 | `cannot find device …` au boot | disque `/dev/sda` qui a changé | mettre un `/dev/disk/by-id/…` dans settings.nix |
 | `experimental feature 'flakes' … disabled` | flakes non activés | `export NIX_CONFIG="experimental-features = nix-command flakes"` |
 | VirtualBox ne démarre pas après un build | noyau trop récent | `kernelLatest = false` dans settings.nix, puis `just build` |
+| `Out of memory` / `No space left` pendant l'install | RAM de l'ISO saturée par un gros build | `virtualboxExtensionPack = false` (l'activer après le 1er boot) ; install.sh ajoute déjà swap + TMPDIR sur le disque |
 
 ---
 
