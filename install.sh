@@ -117,20 +117,62 @@ gather_settings() {
   info "settings.nix écrit."
 }
 
+# Renvoie un chemin /dev/disk/by-id/ stable pour un disque /dev/xxx (ou vide).
+resolve_by_id() {
+  local dev="$1" id name fallback=""
+  for id in /dev/disk/by-id/*; do
+    [ -e "$id" ] || continue
+    case "$id" in *-part*) continue ;; esac
+    [ "$(readlink -f "$id")" = "$dev" ] || continue
+    name="$(basename "$id")"
+    case "$name" in
+      wwn-*|nvme-eui.*) fallback="${fallback:-$id}" ;; # peu lisibles → repli
+      *) echo "$id"; return ;;                          # nvme-Modèle / ata-Modèle
+    esac
+  done
+  echo "$fallback"
+}
+
 choose_disk() {
   title "Choix du disque à FORMATER"
   warn "Le disque choisi sera EFFACÉ intégralement."
   echo
-  echo "Disques détectés :"
-  lsblk -dpno NAME,SIZE,MODEL 2>/dev/null | sed 's/^/  /' || true
+
+  # Média d'installation (clé USB live) : détecté via /iso, exclu de la liste.
+  local live_part live_disk=""
+  live_part="$(findmnt -no SOURCE /iso 2>/dev/null || true)"
+  [ -n "$live_part" ] && live_disk="$(lsblk -npo PKNAME "$live_part" 2>/dev/null | head -1)"
+
+  # Liste numérotée des disques internes (type "disk", hors média live).
+  local -a DISK_DEVS DISK_IDS
+  local dev info_line num=0
+  echo "  #   Disque        Taille  Bus    Modèle"
+  while read -r dev; do
+    [ -n "$dev" ] || continue
+    [ "$dev" = "$live_disk" ] && continue
+    num=$((num + 1))
+    DISK_DEVS[$num]="$dev"
+    DISK_IDS[$num]="$(resolve_by_id "$dev")"
+    info_line="$(lsblk -dno SIZE,TRAN,MODEL "$dev" 2>/dev/null | tr -s ' ')"
+    printf "  %d)  %-12s %s\n" "$num" "$dev" "$info_line"
+  done < <(lsblk -dpno NAME,TYPE | awk '$2=="disk"{print $1}')
+
+  [ "$num" -ge 1 ] || die "Aucun disque interne détecté."
   echo
-  echo "Chemins stables (recommandés — /dev/disk/by-id/) :"
-  ls -l /dev/disk/by-id/ 2>/dev/null | grep -v '\-part' | awk '{print "  "$9" -> "$11}' | sed '/-> $/d' || true
-  echo
-  DISK=$(ask "Disque cible (chemin complet, idéalement /dev/disk/by-id/…)" "$(cur disk)")
-  [ -n "$DISK" ] && [ "$DISK" != "/dev/disk/by-id/CHANGE_ME" ] \
-    || die "Aucun disque valide fourni."
-  [ -e "$DISK" ] || die "Le chemin '$DISK' n'existe pas."
+
+  local choice
+  while true; do
+    choice="$(ask "Numéro du disque à installer" "")"
+    if [[ "$choice" =~ ^[0-9]+$ ]] && [ -n "${DISK_DEVS[$choice]:-}" ]; then break; fi
+    warn "Numéro invalide."
+  done
+
+  DISK="${DISK_IDS[$choice]}"
+  if [ -z "$DISK" ]; then
+    DISK="${DISK_DEVS[$choice]}" # pas de by-id trouvé : on prend /dev/xxx
+    warn "Pas de chemin by-id pour ce disque, on utilise $DISK."
+  fi
+  info "Disque retenu : $DISK"
 }
 
 write_settings() {

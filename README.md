@@ -11,13 +11,16 @@ avec la virtualisation prête à l'emploi (Docker, VirtualBox, Exegol). Les outi
 
 ## Installer en une commande
 
-Depuis l'**ISO NixOS** (démarrée sur la machine cible), une seule ligne
-récupère la config et lance l'installateur guidé :
+Depuis l'**ISO NixOS** (démarrée sur la machine cible), trois commandes courtes :
 
 ```bash
-nix --extra-experimental-features "nix-command flakes" shell nixpkgs#git \
-  -c sh -c 'git clone https://github.com/tbrjk/homenixient && cd homenixient && ./install.sh'
+git clone https://github.com/tbrjk/homenixient
+cd homenixient
+./install.sh
 ```
+
+> `git` est déjà présent sur l'ISO. S'il manque : `nix-shell -p git` puis les
+> mêmes commandes.
 
 `install.sh` te pose les questions nécessaires (utilisateur, machine, disque…),
 puis **fait tout seul** : chiffrement du disque, génération de la config

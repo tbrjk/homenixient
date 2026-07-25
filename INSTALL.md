@@ -28,19 +28,24 @@ dessus. Branche le réseau :
   ```
   Vérifier : `ping -c1 nixos.org`.
 
-### 2. Une seule commande
+### 2. Trois commandes
 
 ```bash
-nix --extra-experimental-features "nix-command flakes" shell nixpkgs#git \
-  -c sh -c 'git clone https://github.com/tbrjk/homenixient && cd homenixient && ./install.sh'
+git clone https://github.com/tbrjk/homenixient
+cd homenixient
+./install.sh
 ```
+
+> `git` est présent sur l'ISO NixOS. S'il manque : `nix-shell -p git` d'abord.
 
 ### 3. Répondre aux questions
 
 `install.sh` demande : utilisateur, nom complet, email, hostname, fuseau,
 clavier, locale, noyau récent (oui/non), extension pack VirtualBox (oui/non),
-et **le disque à formater** (il liste les disques détectés). Puis il récapitule
-et demande **confirmation** avant d'effacer quoi que ce soit.
+et **le disque à formater** — présenté sous forme de **liste numérotée**
+(taille, bus, modèle), la clé USB d'installation étant automatiquement exclue :
+tu tapes juste le numéro. Puis il récapitule et demande **confirmation** avant
+d'effacer quoi que ce soit.
 
 ### 4. Ce qu'il fait ensuite, tout seul
 
