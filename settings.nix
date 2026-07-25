@@ -12,12 +12,12 @@
 # =============================================================================
 {
   # --- Identité utilisateur ---
-  username = "hann"; # nom de login (minuscules, sans espace)
-  fullName = "hann"; # nom affiché + nom pour git
-  email = "thomas.brejka@gmail.com"; # email pour git
+  username = "ohm"; # nom de login (minuscules, sans espace)
+  fullName = "ohm"; # nom affiché + nom pour git
+  email = "EMAIL"; # email pour git
 
   # --- Machine ---
-  hostname = "homenixient"; # nom réseau de la machine
+  hostname = "nixient"; # nom réseau de la machine
 
   # --- Localisation ---
   timezone = "Europe/Paris";
