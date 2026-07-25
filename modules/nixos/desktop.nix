@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, userSettings, ... }:
 
 # =============================================================================
 #  Environnement de bureau : GNOME sur Wayland.
@@ -8,15 +8,17 @@
 # =============================================================================
 
 {
-  # Serveur d'affichage + disposition clavier.
+  # Serveur d'affichage + disposition clavier graphique (suit settings.nix).
+  # Le clavier de la CONSOLE texte est réglé séparément dans base.nix
+  # (console.keyMap). On ne met PAS console.useXkbConfig ici : ça entrerait en
+  # conflit avec console.keyMap (l'un est une chaîne, l'autre une dérivation).
   services.xserver = {
     enable = true;
     xkb = {
-      layout = "fr";
+      layout = userSettings.keymap;
       variant = "";
     };
   };
-  console.useXkbConfig = true; # même clavier dans la console texte
 
   # GDM = écran de connexion ; GNOME = le bureau.
   services.displayManager.gdm.enable = true;
